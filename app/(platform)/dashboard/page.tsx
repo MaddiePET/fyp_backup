@@ -8,8 +8,8 @@ import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Dashboard Page",
+  title: "Dashboard - DTCOB",
+  description: 'Dashboard page for DTCOB banking services.',
 };
 
 export default function Dashboard() {

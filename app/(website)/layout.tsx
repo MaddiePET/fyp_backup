@@ -2,8 +2,8 @@ import React from 'react';
 import Script from 'next/script';
 
 export const metadata = {
-  title: 'DTCOB',
-  description: 'DTCOB Website',
+  title: 'Home - DTCOB',
+  description: 'Home page for DTCOB banking services.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

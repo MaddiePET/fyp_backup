@@ -63,8 +63,11 @@ export default function Home() {
             <span className="navbar-brand-text ms-1 mt-2">DTCOB</span>
           </a>
 
+          {/* UPDATED: Changed from sidebar toggle to direct Link */}
           <div className="d-lg-none ms-auto me-3">
-            <a className="btn custom-btn custom-border-btn" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">Member Login</a>
+            <Link href="/login" className="btn custom-btn custom-border-btn" role="button">
+              Member Login
+            </Link>
           </div>
 
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,50 +109,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Login Section */}
-      <div className="offcanvas offcanvas-end" data-bs-scroll="true" tabIndex={-1} id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
-        <div className="offcanvas-header">
-          <h5 className="offcanvas-title" id="offcanvasExampleLabel">Member Login</h5>
-          <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-
-        <div className="offcanvas-body d-flex flex-column">
-          <form className="custom-form member-login-form" action="#" method="post" role="form">
-            <div className="member-login-form-body">
-              <div className="mb-4">
-                <label className="form-label mb-2" htmlFor="member-login-number">Membership No.</label>
-                <input type="text" name="member-login-number" id="member-login-number" className="form-control" placeholder="11002560" required />
-              </div>
-
-              <div className="mb-4">
-                <label className="form-label mb-2" htmlFor="member-login-password">Password</label>
-                <input type="password" name="member-login-password" id="member-login-password" pattern="[0-9a-zA-Z]{4,10}" className="form-control" placeholder="Password" required />
-              </div>
-
-              <div className="form-check mb-4">
-                <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
-                <label className="form-check-label" htmlFor="flexCheckDefault">Remember me</label>
-              </div>
-
-              <div className="col-lg-5 col-md-7 col-8 mx-auto">
-                <button type="submit" className="form-control">Login</button>
-              </div>
-
-              <div className="text-center my-4">
-                <a href="#">Forgotten password?</a>
-              </div>
-            </div>
-          </form>
-
-          <div className="mt-auto mb-5">
-            <p>
-              <strong className="text-white me-3">Any Questions?</strong>
-              <a href="tel:010-020-0340" className="contact-link">010-020-0340</a>
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Welcome Section */}
       <section className="hero-section d-flex justify-content-center align-items-center" id="section_1">
         <div className="section-overlay"></div>
@@ -173,8 +132,8 @@ export default function Home() {
               </h2>
 
               <div className="custom-btn-group">
-                <a href="/personalverification" className="btn custom-btn smoothscroll me-3">Personal Account</a>
-                <a href="/businessverification" className="link smoothscroll">Business Account</a>
+                <a href="/personal_user_verification" className="btn custom-btn smoothscroll me-3">Personal Account</a>
+                <a href="/business_user_verification" className="link smoothscroll">Business Account</a>
               </div>
             </div>
 
@@ -361,8 +320,9 @@ export default function Home() {
                       className="form-control"
                       placeholder="Email address"
                       required
+                      suppressHydrationWarning
                     />
-                    <button type="submit" className="form-control">Subscribe</button>
+                    <button type="submit" className="form-control" suppressHydrationWarning>Subscribe</button>
                   </div>
                 </form>
               </div>
@@ -711,6 +671,7 @@ export default function Home() {
                         className="form-control"
                         placeholder="Full Name"
                         required
+                        suppressHydrationWarning
                       />
                       <label htmlFor="full-name">Full Name</label>
                     </div>
@@ -726,6 +687,7 @@ export default function Home() {
                         className="form-control"
                         placeholder="Email address"
                         required
+                        suppressHydrationWarning
                       />
                       <label htmlFor="email">Email address</label>
                     </div>
@@ -742,7 +704,7 @@ export default function Home() {
                       <label htmlFor="message">Message</label>
                     </div>
 
-                    <button type="submit" className="form-control">
+                    <button type="submit" className="form-control" suppressHydrationWarning>
                       Submit Form
                     </button>
                   </div>
