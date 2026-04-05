@@ -17,7 +17,6 @@ export async function POST(req: Request) {
       WHERE LOWER(u.username) = LOWER($1)
     `;
 
-    console.log("LOGIN QUERY:", query);
     console.log("USERNAME:", username);
 
     const result = await pool.query(query, [username]);

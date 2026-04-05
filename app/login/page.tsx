@@ -86,9 +86,16 @@ export default function LogIn() {
     }
 
     const data = await res.json();
+    console.log("LOGIN RESPONSE:", data);
 
+    localStorage.setItem("currentUsername", data.username);
     localStorage.setItem("currentAccount", data.name);
+
+    console.log("STORED currentUsername:", localStorage.getItem("currentUsername"));
+    console.log("STORED currentAccount:", localStorage.getItem("currentAccount"));
+
     router.push("/dashboard");
+    
   } catch (err) {
     console.error(err);
     alert("Something went wrong.");
