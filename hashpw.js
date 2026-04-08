@@ -4,10 +4,6 @@ dotenv.config({ path: '.env.local' });
 import { Pool } from "pg";
 import bcrypt from "bcrypt";
 
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASS:', process.env.DB_PASSWORD);
-console.log('DB_PASS type:', typeof process.env.DB_PASSWORD); 
-
 export const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
