@@ -11,14 +11,19 @@ export default function PersonalNonMalaysianPassport() {
   const [preview, setPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = (file: File | undefined) => {
     if (file && file.type.startsWith('image/')) {
+      setFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string);
+        const dataUrl = reader.result as string;
+        // Extract base64 string from data URL (remove "data:image/jpeg;base64," prefix)
+        const base64String = dataUrl.split(',')[1];
+        setPreview(base64String);
       };
       reader.readAsDataURL(file);
     }
@@ -48,13 +53,49 @@ export default function PersonalNonMalaysianPassport() {
     processFile(file);
   };
 
-  const handleSubmit = () => {
-    if (preview) {
+  const handleSubmit = async () => {
+    if (file && preview) {
       setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
+
+      try {
+        const journeyId = localStorage.getItem("journeyId");
+        
+        if (!journeyId) {
+          alert("Journey ID not found. Please restart the registration process.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Send passport image to okayid API
+        const response = await fetch("/api/ekyc/okayid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            journeyId,
+            imageBase64: preview,
+            docType: "passport",
+          }),
+        });
+
+        const result = await response.json();
+        console.log("Passport response:", result);
+        console.log("Response status:", response.status);
+
+        if (!response.ok) {
+          const errorMsg = result?.error || result?.details || "Unknown error";
+          console.error("Passport verification failed:", result);
+          alert(`Failed to verify passport (${response.status}): ${errorMsg}. Please try again.`);
+          setIsLoading(false);
+          return;
+        }
+
+        // Passport verified successfully, proceed
         router.push('/personal/non-malaysian/info');
-      }, 2000);
+      } catch (error) {
+        console.error("Error uploading passport:", error);
+        alert("Error uploading passport. Please try again.");
+        setIsLoading(false);
+      }
     }
   };
 
@@ -127,7 +168,7 @@ export default function PersonalNonMalaysianPassport() {
 
             {preview ? (
               <>
-                <img src={preview} alt="Passport Preview" className="w-full h-full object-cover" />
+                <img src={`data:${file?.type};base64,${preview}`} alt="Passport Preview" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="text-white text-sm font-medium bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
                     Change Image

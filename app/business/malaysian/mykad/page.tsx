@@ -12,16 +12,25 @@ export default function BusinessMalaysianMyKad() {
   const [backPreview, setBackPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState<'front' | 'back' | null>(null);
+  const [frontFile, setFrontFile] = useState<File | null>(null);
+  const [backFile, setBackFile] = useState<File | null>(null);
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = (file: File | undefined, type: 'front' | 'back') => {
     if (file && file.type.startsWith('image/')) {
+      // Store raw file for the backend
+      if (type === 'front') setFrontFile(file);
+      else setBackFile(file);
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (type === 'front') setFrontPreview(reader.result as string);
-        else setBackPreview(reader.result as string);
+        const dataUrl = reader.result as string;
+        // Extract base64 string from data URL 
+        const base64String = dataUrl.split(',')[1];
+        if (type === 'front') setFrontPreview(base64String);
+        else setBackPreview(base64String);
       };
       reader.readAsDataURL(file);
     }
@@ -51,13 +60,72 @@ export default function BusinessMalaysianMyKad() {
     processFile(file, type);
   };
 
-  const handleSubmit = () => {
-    if (frontPreview && backPreview) {
+  const handleSubmit = async () => {
+    if (frontFile && backFile && frontPreview && backPreview) {
       setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
+
+      try {
+        const journeyId = localStorage.getItem("journeyId");
+        
+        if (!journeyId) {
+          alert("Journey ID not found. Please restart the registration process.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Send front image to okayid API
+        const frontResponse = await fetch("/api/ekyc/okayid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            journeyId,
+            imageBase64: frontPreview,
+            docType: "mykad",
+          }),
+        });
+
+        const frontResult = await frontResponse.json();
+        console.log("Front MyKad response:", frontResult);
+        console.log("Front response status:", frontResponse.status);
+
+        if (!frontResponse.ok) {
+          const errorMsg = frontResult?.error || frontResult?.details || "Unknown error";
+          console.error("Front MyKad verification failed:", frontResult);
+          alert(`Failed to verify front of MyKad (${frontResponse.status}): ${errorMsg}. Please try again.`);
+          setIsLoading(false);
+          return;
+        }
+
+        // Send back image to okayid API
+        const backResponse = await fetch("/api/ekyc/okayid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            journeyId,
+            imageBase64: backPreview,
+            docType: "mykad",
+          }),
+        });
+
+        const backResult = await backResponse.json();
+        console.log("Back MyKad response:", backResult);
+        console.log("Back response status:", backResponse.status);
+
+        if (!backResponse.ok) {
+          const errorMsg = backResult?.error || backResult?.details || "Unknown error";
+          console.error("Back MyKad verification failed:", backResult);
+          alert(`Failed to verify back of MyKad (${backResponse.status}): ${errorMsg}. Please try again.`);
+          setIsLoading(false);
+          return;
+        }
+
+        // Both images verified successfully, proceed
         router.push('/business/malaysian/phone');
-      }, 2000);
+      } catch (error) {
+        console.error("Error uploading MyKad:", error);
+        alert("Error uploading MyKad. Please try again.");
+        setIsLoading(false);
+      }
     }
   };
 
@@ -126,7 +194,7 @@ export default function BusinessMalaysianMyKad() {
                 <input type="file" ref={item.ref} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, item.id)} />
                 {item.preview ? (
                   <>
-                    <img src={item.preview} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={`data:${item.id === 'front' ? frontFile?.type : backFile?.type};base64,${item.preview}`} alt="Preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white text-sm font-medium bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">Change Image</span>
                     </div>

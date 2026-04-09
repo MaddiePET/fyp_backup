@@ -14,8 +14,6 @@ export default function PersonalMalaysianMyKad() {
   const [isDragging, setIsDragging] = useState<'front' | 'back' | null>(null);
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [ocrData, setOcrData] = useState<any>(null); // Store structured OCR data for display
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
@@ -28,8 +26,11 @@ export default function PersonalMalaysianMyKad() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (type === 'front') setFrontPreview(reader.result as string);
-        else setBackPreview(reader.result as string);
+        const dataUrl = reader.result as string;
+        // Extract base64 string from data URL 
+        const base64String = dataUrl.split(',')[1];
+        if (type === 'front') setFrontPreview(base64String);
+        else setBackPreview(base64String);
       };
       reader.readAsDataURL(file);
     }
@@ -59,38 +60,71 @@ export default function PersonalMalaysianMyKad() {
     processFile(file, type);
   };
 
-  // UPDATED: Now calls the OCR bridge instead of just a timeout
+  // Send MyKad images to innov8tif okayid API
   const handleSubmit = async () => {
-    if (frontFile && backFile) {
+    if (frontFile && backFile && frontPreview && backPreview) {
       setIsLoading(true);
-      setErrorMessage(null);
-      setOcrData(null);
 
       try {
-        const formData = new FormData();
-        formData.append("file", frontFile);
+        const journeyId = localStorage.getItem("journeyId");
+        
+        if (!journeyId) {
+          alert("Journey ID not found. Please restart the registration process.");
+          setIsLoading(false);
+          return;
+        }
 
-        const response = await fetch("/api/ocr", {
+        // Send front image to okayid API
+        const frontResponse = await fetch("/api/ekyc/okayid", {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            journeyId,
+            imageBase64: frontPreview,
+            docType: "mykad",
+          }),
         });
 
-        const result = await response.json();
+        const frontResult = await frontResponse.json();
+        console.log("Front MyKad response:", frontResult);
+        console.log("Front response status:", frontResponse.status);
 
-        if (response.ok) {
-          console.log("OCR Extracted IC:", result.data);
-          // Show success message with the data
-          setOcrData(JSON.parse(result.data)); 
-          // Delay redirect so the user can see the success message
-          setTimeout(() => router.push('/personal/malaysian/phone'), 3000);
-        } else {
-          // Failure handling
-          setErrorMessage(result.error || "OCR Failed: Check console for details.");
-          console.error("Backend Error:", result);
+        if (!frontResponse.ok) {
+          const errorMsg = frontResult?.error || frontResult?.details || "Unknown error";
+          console.error("Front MyKad verification failed:", frontResult);
+          alert(`Failed to verify front of MyKad (${frontResponse.status}): ${errorMsg}. Please try again.`);
+          setIsLoading(false);
+          return;
         }
-      } catch (err) {
-        setErrorMessage("Network error: Could not reach the OCR bridge.");
-      } finally {
+
+        // Send back image to okayid API
+        const backResponse = await fetch("/api/ekyc/okayid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            journeyId,
+            imageBase64: backPreview,
+            docType: "mykad",
+          }),
+        });
+
+        const backResult = await backResponse.json();
+        console.log("Back MyKad response:", backResult);
+        console.log("Back response status:", backResponse.status);
+
+        if (!backResponse.ok) {
+          const errorMsg = backResult?.error || backResult?.details || "Unknown error";
+          console.error("Back MyKad verification failed:", backResult);
+          alert(`Failed to verify back of MyKad (${backResponse.status}): ${errorMsg}. Please try again.`);
+          setIsLoading(false);
+          return;
+        }
+
+        // Both images verified successfully, proceed
+        router.push('/personal/malaysian/phone');
+      } catch (error) {
+        console.error("Error uploading MyKad:", error);
+        alert("Error uploading MyKad. Please try again.");
         setIsLoading(false);
       }
     }
@@ -162,7 +196,7 @@ export default function PersonalMalaysianMyKad() {
                 <input type="file" ref={item.ref} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, item.id)} />
                 {item.preview ? (
                   <>
-                    <img src={item.preview} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={`data:${item.id === 'front' ? frontFile?.type : backFile?.type};base64,${item.preview}`} alt="Preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white text-sm font-medium bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">Change Image</span>
                     </div>
@@ -191,24 +225,6 @@ export default function PersonalMalaysianMyKad() {
             </div>
           ))}
         </div>
-
-        {/* ERROR MESSAGE DISPLAY */}
-        {errorMessage && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs text-center font-medium">
-            {errorMessage}
-          </div>
-        )}
-        {/* SUCCESS MESSAGE DISPLAY */}
-        {ocrData && (
-          <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm animate-pulse">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-              <span className="font-bold">Verification Successful!</span>
-            </div>
-            <p>Extracted IC: <span className="font-mono font-bold">{ocrData.ic_number}</span></p>
-            <p className="text-xs mt-1 opacity-70">Redirecting to phone verification...</p>
-          </div>
-        )}
 
         <div className="mt-6 w-full max-w-md mx-auto relative z-10">
           <button
