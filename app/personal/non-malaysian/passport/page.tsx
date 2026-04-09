@@ -89,6 +89,10 @@ export default function PersonalNonMalaysianPassport() {
           return;
         }
 
+        // Two-step verification successful
+        console.log("Step 1 - OCR Extraction:", result.ocrExtraction);
+        console.log("Step 2 - Authentication Verification:", result.authenticationVerification);
+        
         // Passport verified successfully, proceed
         router.push('/personal/non-malaysian/info');
       } catch (error) {

@@ -97,6 +97,10 @@ export default function PersonalMalaysianMyKad() {
           return;
         }
 
+        // Front verified - log OCR and auth results
+        console.log("Front OCR Extraction:", frontResult.ocrExtraction);
+        console.log("Front Authentication:", frontResult.authenticationVerification);
+
         // Send back image to okayid API
         const backResponse = await fetch("/api/ekyc/okayid", {
           method: "POST",
@@ -119,6 +123,10 @@ export default function PersonalMalaysianMyKad() {
           setIsLoading(false);
           return;
         }
+
+        // Back verified - log OCR and auth results
+        console.log("Back OCR Extraction:", backResult.ocrExtraction);
+        console.log("Back Authentication:", backResult.authenticationVerification);
 
         // Both images verified successfully, proceed
         router.push('/personal/malaysian/phone');

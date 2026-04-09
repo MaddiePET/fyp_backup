@@ -88,13 +88,17 @@ export default function BusinessMalaysianMyKad() {
         console.log("Front MyKad response:", frontResult);
         console.log("Front response status:", frontResponse.status);
 
-        if (!frontResponse.ok) {
+        if (!frontResult.ok) {
           const errorMsg = frontResult?.error || frontResult?.details || "Unknown error";
           console.error("Front MyKad verification failed:", frontResult);
           alert(`Failed to verify front of MyKad (${frontResponse.status}): ${errorMsg}. Please try again.`);
           setIsLoading(false);
           return;
         }
+
+        // Front verified - log OCR and auth results
+        console.log("Front OCR Extraction:", frontResult.ocrExtraction);
+        console.log("Front Authentication:", frontResult.authenticationVerification);
 
         // Send back image to okayid API
         const backResponse = await fetch("/api/ekyc/okayid", {
@@ -118,6 +122,10 @@ export default function BusinessMalaysianMyKad() {
           setIsLoading(false);
           return;
         }
+
+        // Back verified - log OCR and auth results
+        console.log("Back OCR Extraction:", backResult.ocrExtraction);
+        console.log("Back Authentication:", backResult.authenticationVerification);
 
         // Both images verified successfully, proceed
         router.push('/business/malaysian/phone');
