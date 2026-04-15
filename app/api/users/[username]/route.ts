@@ -18,8 +18,7 @@ export async function GET(
         u.img,
         u.sec_phrase,
         c.cust_id,
-        c.fname,
-        c.lname,
+        c.full_name,
         c.email
       FROM banka."User" u
       JOIN banka."Customer" c ON u.cust_id = c.cust_id
@@ -36,7 +35,7 @@ export async function GET(
 
     return NextResponse.json({
       username: user.username,
-      name: `${user.fname} ${user.lname}`,
+      name: `${user.full_name}`,
       email: user.email,
       avatar: user.img || "/images/user/default.jpg",
       securityPhrase: user.sec_phrase,
