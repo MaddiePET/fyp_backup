@@ -8,11 +8,26 @@ export async function POST(req: Request) {
   try {
     await client.query("BEGIN");
 
-    const fullName = (data.personalInfo?.fullName || "").trim();
-    const nameParts = fullName.split(/\s+/).filter(Boolean);
-    const fname = nameParts[0] || null;
-    const lname = nameParts.slice(1).join(" ") || null;
+console.log("FULL SUBMIT DATA:", JSON.stringify(data, null, 2));
+console.log("personalInfo:", data.personalInfo);
+console.log("contactInfo:", data.contactInfo);
+console.log("businessContact:", data.businessContact?.bus_email);
+console.log("businessAddress section:", data.businessAddress);
+console.log("businessAddress.businessAddress:", data.businessAddress?.businessAddress);
+console.log("businessAddress.mailingAddress:", data.businessAddress?.mailingAddress);
+console.log("business details:", data.businessParticulars);
 
+    const personalAddress = {
+      add_1: data.personalInfo?.streetAddress || "",
+      add_2: data.personalInfo?.city || "",
+      postcode: data.personalInfo?.postal || "",
+      state: data.personalInfo?.state || "",
+      country: data.personalInfo?.country || "Malaysia",
+    };
+
+    if (!personalAddress.add_1) {
+      throw new Error("Personal address line 1 is missing");
+    }
     // 1. Insert personal/home address first
     const homeAddressRes = await client.query(
       `
@@ -42,8 +57,7 @@ export async function POST(req: Request) {
       `
       INSERT INTO banka."Customer" (
         id_num,
-        fname,
-        lname,
+        full_name,
         id_type,
         dob,
         ph_no_1,
@@ -51,17 +65,16 @@ export async function POST(req: Request) {
         email,
         home_add
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
       RETURNING cust_id
       `,
       [
         data.personalInfo?.id_num || null,
-        fname,
-        lname,
+        data.personalInfo?.fullName || null,
         "IC",
         data.personalInfo?.dob || null,
         data.phoneVerification?.ph_no_1 || null,
-        data.phoneVerification?.ph_no_2 || null,
+        data.phoneVerification?.ph_no_2 || "-", 
         data.contactInfo?.email || null,
         home_add,
       ]
@@ -98,8 +111,51 @@ export async function POST(req: Request) {
     const user_id = userRes.rows[0].user_id;
 
     // 4. Insert business address
-    const businessAddress = data.businessAddress?.businessAddress;
-    const mailingAddress = data.businessAddress?.mailingAddress;
+
+    const businessAddress = {
+      add_1:
+        data.businessAddress?.businessAddress?.streetAddress ||
+        data.businessAddress?.streetAddress ||
+        "",
+      add_2:
+        data.businessAddress?.businessAddress?.city ||
+        data.businessAddress?.city ||
+        "",
+      postcode:
+        data.businessAddress?.businessAddress?.postal ||
+        data.businessAddress?.postal ||
+        "",
+      state:
+        data.businessAddress?.businessAddress?.state ||
+        data.businessAddress?.state ||
+        "",
+      country:
+        data.businessAddress?.businessAddress?.country ||
+        data.businessAddress?.country ||
+        "Malaysia",
+    };
+
+    if (!businessAddress.add_1) {
+      throw new Error("Business address line 1 is missing");
+    }
+
+    const mailingAddress = {
+      add_1:
+        data.businessAddress?.mailingAddress?.streetAddress ||
+        "",
+      add_2:
+        data.businessAddress?.mailingAddress?.city ||
+        "",
+      postcode:
+        data.businessAddress?.mailingAddress?.postal ||
+        "",
+      state:
+        data.businessAddress?.mailingAddress?.state ||
+        "",
+      country:
+        data.businessAddress?.mailingAddress?.country ||
+        "Malaysia",
+    };
     const isMailingSameAsBusiness =
       data.businessAddress?.isMailingSameAsBusiness ?? true;
 
@@ -116,11 +172,11 @@ export async function POST(req: Request) {
       RETURNING add_id
       `,
       [
-        businessAddress?.streetAddress || null,
-        businessAddress?.city || null,
-        businessAddress?.postal || null,
-        businessAddress?.state || null,
-        businessAddress?.country || "Malaysia",
+        businessAddress.add_1,
+        businessAddress.add_2,
+        businessAddress.postcode,
+        businessAddress.state,
+        businessAddress.country,
       ]
     );
 
@@ -143,11 +199,11 @@ export async function POST(req: Request) {
         RETURNING add_id
         `,
         [
-          mailingAddress?.streetAddress || null,
-          mailingAddress?.city || null,
-          mailingAddress?.postal || null,
-          mailingAddress?.state || null,
-          mailingAddress?.country || "Malaysia",
+          mailingAddress.add_1,
+          mailingAddress.add_2,
+          mailingAddress.postcode,
+          mailingAddress.state,
+          mailingAddress.country,
         ]
       );
 
@@ -176,10 +232,10 @@ export async function POST(req: Request) {
         data.businessParticulars?.brn || data.businessParticulars?.reg_no || null,
         data.businessParticulars?.businessName || data.businessParticulars?.bus_name || null,
         data.businessParticulars?.businessType || data.businessParticulars?.bus_type || null,
-        data.businessParticulars?.role || null,
-        data.businessParticulars?.bus_ph_no || null,
-        data.businessParticulars?.bus_email || null,
-        data.businessParticulars?.startDate || data.businessParticulars?.start_date || null,
+        data.businessParticulars?.role || "notyet",
+        data.businessContact?.bus_ph_no || null,
+        data.businessContact?.bus_email || null,
+        data.businessParticulars?.startDate || null,
         bus_add_id,
         mail_add_id,
       ]
