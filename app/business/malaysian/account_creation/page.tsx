@@ -52,14 +52,8 @@ export default function BusinessMalaysianAccountCreation() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setProfileFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        // Extract base64 string from data URL 
-        const base64String = dataUrl.split(',')[1];
-        setProfilePreview(base64String);
-      };
+      reader.onloadend = () => setProfilePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -81,6 +75,7 @@ export default function BusinessMalaysianAccountCreation() {
     const finalData = {
       ...formData,
       account: {
+        ...formData.account,
         username,
         password,
         securityPhrase,
@@ -88,7 +83,7 @@ export default function BusinessMalaysianAccountCreation() {
       },
     };
 
-    const res = await fetch("/api/application", {
+    const res = await fetch("/api/application/msian_current_account", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -170,7 +165,7 @@ export default function BusinessMalaysianAccountCreation() {
                 >
                   {profilePreview ? (
                     <>
-                      <img src={`data:${profileFile?.type};base64,${profilePreview}`} className="w-full h-full object-cover" alt="Profile" />
+                      <img src={profilePreview} className="w-full h-full object-cover" alt="Profile" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span className="text-white text-[10px] font-bold uppercase bg-white/20 backdrop-blur-sm px-2 py-1 rounded">Change</span>
                       </div>
