@@ -74,7 +74,11 @@ export default function PersonalMalaysianMyKad() {
           return;
         }
 
-        // Send front image to okayid API
+        /**
+         * 1. FRONT OF MYKAD
+         */
+
+        // OCR extraction for the front
         const frontOkayIdResponse = await fetch("/api/ekyc/okayid", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -84,45 +88,37 @@ export default function PersonalMalaysianMyKad() {
           }),
         });
 
-        const frontOkayIdResult = await frontOkayIdResponse.json();
-        console.log("Front MyKad OCR response:", frontOkayIdResult);
-        console.log("Front MyKad OCR status:", frontOkayIdResponse.status);
-
         if (!frontOkayIdResponse.ok) {
-          const errorMsg = frontOkayIdResult?.error || frontOkayIdResult?.details || "Unknown error";
-          console.error("Front MyKad OCR failed:", frontOkayIdResult);
-          alert(`Failed to verify front of MyKad OCR (${frontOkayIdResponse.status}): ${errorMsg}. Please try again.`);
+          const res = await frontOkayIdResponse.json();
+          alert(`Front OCR failed: ${res.error || "Please try again."}`);
           setIsLoading(false);
           return;
         }
 
-        // Send front image to okaydoc API for authentication verification
+        // Authenticity verification for the front
         const frontOkayDocResponse = await fetch("/api/ekyc/okaydoc", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             journeyId,
-            base64ImageString: frontPreview,
+            type: "nonpassport",      // Matches backend logic
+            halfSizeImage: frontPreview, // Matches backend extraction
             docType: "mykad",
           }),
         });
 
-        const frontOkayDocResult = await frontOkayDocResponse.json();
-        console.log("Front MyKad auth response:", frontOkayDocResult);
-        console.log("Front MyKad auth status:", frontOkayDocResponse.status);
-
         if (!frontOkayDocResponse.ok) {
-          const errorMsg = frontOkayDocResult?.error || frontOkayDocResult?.details || "Unknown error";
-          console.error("Front MyKad authentication failed:", frontOkayDocResult);
-          alert(`Failed to verify front of MyKad authentication (${frontOkayDocResponse.status}): ${errorMsg}. Please try again.`);
+          const res = await frontOkayDocResponse.json();
+          alert(`Front Auth failed: ${res.error || "Check image quality."}`);
           setIsLoading(false);
           return;
         }
 
-        console.log("Front OCR Extraction:", JSON.stringify(frontOkayIdResult, null, 2));
-        console.log("Front Authentication:", JSON.stringify(frontOkayDocResult, null, 2));
+        /**
+         * 2. BACK OF MYKAD
+         */
 
-        // Send back image to okayid API
+        // OCR extraction for the back
         const backOkayIdResponse = await fetch("/api/ekyc/okayid", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -132,45 +128,33 @@ export default function PersonalMalaysianMyKad() {
           }),
         });
 
-        const backOkayIdResult = await backOkayIdResponse.json();
-        console.log("Back MyKad OCR response:", backOkayIdResult);
-        console.log("Back MyKad OCR status:", backOkayIdResponse.status);
-
         if (!backOkayIdResponse.ok) {
-          const errorMsg = backOkayIdResult?.error || backOkayIdResult?.details || "Unknown error";
-          console.error("Back MyKad OCR failed:", backOkayIdResult);
-          alert(`Failed to verify back of MyKad OCR (${backOkayIdResponse.status}): ${errorMsg}. Please try again.`);
+          const res = await backOkayIdResponse.json();
+          alert(`Back OCR failed: ${res.error || "Please try again."}`);
           setIsLoading(false);
           return;
         }
 
-        // Send back image to okaydoc API for authentication verification
+        // Authenticity verification for the back
         const backOkayDocResponse = await fetch("/api/ekyc/okaydoc", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             journeyId,
-            base64ImageString: backPreview,
+            type: "nonpassport",      // Consistent with backend
+            halfSizeImage: backPreview, // Consistent with backend
             docType: "mykad",
           }),
         });
 
-        const backOkayDocResult = await backOkayDocResponse.json();
-        console.log("Back MyKad auth response:", backOkayDocResult);
-        console.log("Back MyKad auth status:", backOkayDocResponse.status);
-
         if (!backOkayDocResponse.ok) {
-          const errorMsg = backOkayDocResult?.error || backOkayDocResult?.details || "Unknown error";
-          console.error("Back MyKad authentication failed:", backOkayDocResult);
-          alert(`Failed to verify back of MyKad authentication (${backOkayDocResponse.status}): ${errorMsg}. Please try again.`);
+          const res = await backOkayDocResponse.json();
+          alert(`Back Auth failed: ${res.error || "Check image quality."}`);
           setIsLoading(false);
           return;
         }
 
-        console.log("Back OCR Extraction:", JSON.stringify(backOkayIdResult, null, 2));
-        console.log("Back Authentication:", JSON.stringify(backOkayDocResult, null, 2));
-
-        // Both images verified successfully, proceed
+        // All verifications successful
         router.push('/personal/malaysian/phone');
       } catch (error) {
         console.error("Error uploading MyKad:", error);
