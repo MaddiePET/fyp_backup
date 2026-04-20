@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { journeyId, type, country, halfSizeImage, fullSizeImage } = await req.json();
+    const { journeyId, type, country, halfSizeImage, fullSizeImage, docType } = await req.json();
 
     if (!journeyId || !type || !halfSizeImage) {
       return NextResponse.json({ error: "Missing journeyId, type, or halfSizeImage" }, { status: 400 });
@@ -25,8 +25,8 @@ export async function POST(req: Request) {
         journeyId,
         type: "nonpassport",
         idImageBase64Image: halfSizeImage,
-        version: "7",
-        docType: "mykad",
+        version: "7-1",
+        docType: docType || "mykad",
         landmarkCheck: "true",
         fontCheck: "true",
         microprintCheck: "true",
@@ -37,9 +37,9 @@ export async function POST(req: Request) {
         screenDetection: "true",
         ghostPhotoColorDetection: "true",
         idBlurDetection: "true",
-        idBrightnessDetection: "true",
-        faceBrightnessDetection: "true",
-        contentSubstitution: "true",
+        // Updated flags based on non-islam front view requirements
+        islamFieldTamperingDetection:"true",
+        qualityCheckDetection:"true"
       };
       console.log("OkayDoc MyKad verification - journeyId:", journeyId);
     } else {
