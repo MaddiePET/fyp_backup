@@ -81,7 +81,7 @@ export default function PersonalMalaysianMyKad() {
           body: JSON.stringify({ journeyId, base64ImageString: frontPreview }),
         });
         const frontIdData = await frontIdRes.json();
-        if (frontIdData.status !== "success") {
+        if (!frontIdRes.ok || frontIdData.status !== "success") {
           throw new Error(`Front OCR Failed: ${frontIdData.message || "Unrecognized Image"}`);
         }
 
@@ -96,7 +96,7 @@ export default function PersonalMalaysianMyKad() {
           }),
         });
         const frontDocData = await frontDocRes.json();
-        if (frontDocData.status !== "success") {
+        if (!frontDocRes.ok || frontDocData.status !== "success") {
           throw new Error(`Front Authentication Failed: ${frontDocData.message || "Quality issues"}`);
         }
 
@@ -113,7 +113,7 @@ export default function PersonalMalaysianMyKad() {
         });
         const backDocData = await backDocRes.json();
         
-        if (backDocData.status !== "success") {
+        if (!backDocRes.ok || backDocData.status !== "success") {
           throw new Error(`Back Verification Failed: ${backDocData.message || "Ensure image is clear"}`);
         }
 
