@@ -14,8 +14,6 @@ export default function PersonalMalaysianMyKad() {
   const [isDragging, setIsDragging] = useState<'front' | 'back' | null>(null);
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [ocrData, setOcrData] = useState<any>(null); // Store structured OCR data for display
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
