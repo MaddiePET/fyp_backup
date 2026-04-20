@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { journeyId, type, country, halfSizeImage, fullSizeImage, docType } = await req.json();
+    const body = await req.json();
+    const { journeyId, type, isBack } = body;
+    const base64Image = body.halfSizeImage || body.base64ImageString || body.idImageBase64Image;
 
-    if (!journeyId || !type || !halfSizeImage) {
-      return NextResponse.json({ error: "Missing journeyId, type, or halfSizeImage" }, { status: 400 });
+    if (!journeyId || !type || !base64Image) {
+      return NextResponse.json({ error: "Missing journeyId, type, or image data" }, { status: 400 });
     }
 
     const okaydocUrl = `${process.env.INNOVA8TIF_API_URL}/okaydoc`;
@@ -13,20 +15,29 @@ export async function POST(req: Request) {
 
     if (type === "passport") {
       okaydocBody = {
-        journeyId,
+        journeyId: journeyId,
         type: "passport",
-        country: country || "OTHER",
-        halfSizeImage,
-        fullSizeImage
+        country: "OTHER",
+        halfSizeImage: base64Image,
+        fullSizeImage: body.fullSizeImage || ""
       };
       console.log("OkayDoc passport verification - journeyId:", journeyId);
-    } else if (type === "nonpassport") {
+    } else if (isBack) {
       okaydocBody = {
-        journeyId,
+        journeyId: journeyId,
         type: "nonpassport",
-        idImageBase64Image: halfSizeImage,
+        idImageBase64Image: base64Image,
+        version: "2",
+        docType: "mykad_back"
+      };
+      console.log("OkayDoc MyKad BACK verification - journeyId:", journeyId);
+    } else {
+      okaydocBody = {
+        journeyId: journeyId,
+        type: "nonpassport",
+        idImageBase64Image: base64Image,
         version: "7-1",
-        docType: docType || "mykad",
+        docType: "mykad",
         landmarkCheck: "true",
         fontCheck: "true",
         microprintCheck: "true",
@@ -37,14 +48,11 @@ export async function POST(req: Request) {
         screenDetection: "true",
         ghostPhotoColorDetection: "true",
         idBlurDetection: "true",
-        // Updated flags based on non-islam front view requirements
         islamFieldTamperingDetection:"true",
         qualityCheckDetection:"true"
       };
       console.log("OkayDoc MyKad verification - journeyId:", journeyId);
-    } else {
-      return NextResponse.json({ error: "Unsupported document type" }, { status: 400 });
-    }
+    } 
 
     const okaydocResponse = await fetch(okaydocUrl, {
       method: "POST",
