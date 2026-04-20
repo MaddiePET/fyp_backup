@@ -14,6 +14,8 @@ export default function PersonalMalaysianMyKad() {
   const [isDragging, setIsDragging] = useState<'front' | 'back' | null>(null);
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [ocrData, setOcrData] = useState<any>(null); // Store structured OCR data for display
 
   const frontInputRef = useRef<HTMLInputElement>(null);
   const backInputRef = useRef<HTMLInputElement>(null);
@@ -26,11 +28,8 @@ export default function PersonalMalaysianMyKad() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        // Extract base64 string from data URL 
-        const base64String = dataUrl.split(',')[1];
-        if (type === 'front') setFrontPreview(base64String);
-        else setBackPreview(base64String);
+        if (type === 'front') setFrontPreview(reader.result as string);
+        else setBackPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -60,11 +59,10 @@ export default function PersonalMalaysianMyKad() {
     processFile(file, type);
   };
 
-  // Send MyKad images to innov8tif okayid API
-  const handleSubmit = async () => {
-    if (frontFile && backFile && frontPreview && backPreview) {
+    const handleSubmit = async () => {
+    if (frontFile && backFile) {
       setIsLoading(true);
-
+      
       try {
         const journeyId = localStorage.getItem("journeyId");
         
@@ -87,13 +85,12 @@ export default function PersonalMalaysianMyKad() {
             base64ImageString: frontPreview,
           }),
         });
-
-        if (!frontOkayIdResponse.ok) {
+      if (!frontOkayIdResponse.ok) {
           const res = await frontOkayIdResponse.json();
           alert(`Front OCR failed: ${res.error || "Please try again."}`);
           setIsLoading(false);
           return;
-        }
+      }
 
         // Authenticity verification for the front
         const frontOkayDocResponse = await fetch("/api/ekyc/okaydoc", {
@@ -230,7 +227,7 @@ export default function PersonalMalaysianMyKad() {
                 <input type="file" ref={item.ref} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, item.id)} />
                 {item.preview ? (
                   <>
-                    <img src={`data:${item.id === 'front' ? frontFile?.type : backFile?.type};base64,${item.preview}`} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={item.preview} alt="Preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white text-sm font-medium bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">Change Image</span>
                     </div>
@@ -259,6 +256,24 @@ export default function PersonalMalaysianMyKad() {
             </div>
           ))}
         </div>
+
+        {/* ERROR MESSAGE DISPLAY */}
+        {errorMessage && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs text-center font-medium">
+            {errorMessage}
+          </div>
+        )}
+        {/* SUCCESS MESSAGE DISPLAY */}
+        {ocrData && (
+          <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm animate-pulse">
+            <div className="flex items-center gap-2 mb-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+              <span className="font-bold">Verification Successful!</span>
+            </div>
+            <p>Extracted IC: <span className="font-mono font-bold">{ocrData.ic_number}</span></p>
+            <p className="text-xs mt-1 opacity-70">Redirecting to phone verification...</p>
+          </div>
+        )}
 
         <div className="mt-6 w-full max-w-md mx-auto relative z-10">
           <button

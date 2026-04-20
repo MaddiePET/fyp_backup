@@ -12,8 +12,7 @@ export async function GET(
       SELECT
         u.username,
         u.img,
-        c.fname,
-        c.lname,
+        c.full_name,
         c.ph_no_1,
         c.email,
         sa.occupation,
@@ -28,7 +27,7 @@ export async function GET(
       LEFT JOIN banka."Savings_account" AS sa
         ON u.user_id = sa.user_id
       LEFT JOIN banka."Address" AS a
-        ON sa.add_id = a.add_id
+        ON c.home_add = a.add_id
       WHERE LOWER(u.username) = LOWER($1)
     `;
 
@@ -44,12 +43,11 @@ export async function GET(
 
     return NextResponse.json({
       username: user.username,
-      name: `${user.fname} ${user.lname}`,
-      firstName: user.fname,
-      lastName: user.lname,
-      email: user.email,
+      name: user.full_name || "",
+      fullName: user.full_name || "",
+      email: user.email || "",
       avatar: user.img || "/images/user/default.jpg",
-      phone: user.ph_no_1,
+      phone: user.ph_no_1 || "",
       occupation: user.occupation || "",
       country: user.country || "",
       cityState: user.state || "",

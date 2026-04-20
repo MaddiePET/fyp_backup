@@ -10,8 +10,7 @@ export async function POST(req: Request) {
       SELECT 
         u.username,
         u.password,
-        c.fname,
-        c.lname
+        c.full_name
       FROM banka."User" AS u
       JOIN banka."Customer" AS c ON u.cust_id = c.cust_id
       WHERE LOWER(u.username) = LOWER($1)
@@ -39,7 +38,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       username: user.username,
-      name: `${user.fname} ${user.lname}`,
+      name: `${user.full_name}`,
     });
   } catch (err) {
     console.error("LOGIN ROUTE ERROR:", err);
